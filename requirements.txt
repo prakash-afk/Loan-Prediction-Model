@@ -1,0 +1,26 @@
+kagglehub
+# Core
+numpy
+pandas
+
+# ML
+scikit-learn
+joblib
+
+# Visualization (EDA only)
+matplotlib
+seaborn
+
+# API
+fastapi
+uvicorn
+
+# Validation (schemas)
+pydantic
+
+# Optional (if using env variables)
+python-dotenv
+
+# Optional (if you experiment with notebooks)
+jupyter
+ipykernel
