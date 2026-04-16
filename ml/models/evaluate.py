@@ -1,6 +1,6 @@
 from sklearn.metrics import accuracy_score, classification_report
 
-from src.utils.helpers import combine_all_results
+from ml.utils.helpers import combine_all_results
 
 
 def show_best_model(results, tuned_results, xgb_result):

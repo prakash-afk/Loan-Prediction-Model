@@ -1,35 +1,39 @@
-from config import TARGET_COL
-from src.data.load_data import load_data, show_basic_data_info, show_missing_values
-from src.data.preprocess import (
+from app.core.config import TARGET_COL
+from ml.data.load_data import load_data, show_basic_data_info, show_missing_values
+from ml.data.preprocess import (
+    apply_cap_bounds,
     apply_log_transformation,
     cap_outliers,
     drop_customer_id,
     encode_categorical_features,
+    fit_label_encoders,
     fix_negative_assets,
+    get_cap_bounds,
     scale_features,
     split_features_and_target,
     split_train_test_data,
 )
-from src.features.feature_engineering import (
+from ml.features.feature_engineering import (
     add_net_worth_feature,
     create_has_derog_feature,
     drop_derogatory_marks,
     drop_loan_to_income_ratio,
     inspect_derogatory_marks,
 )
-from src.models.evaluate import (
+from ml.models.evaluate import (
     print_classification_report_text,
     run_overfitting_check,
     show_best_model,
 )
-from src.models.predict import create_sample_applicants, predict_sample_applicants
-from src.models.train import (
+from ml.models.predict import create_sample_applicants, predict_sample_applicants
+from ml.models.save_artifacts import save_training_artifacts
+from ml.models.train import (
     train_baseline_models,
     train_tuned_models,
     train_xgboost_model,
 )
-from src.utils.helpers import setup_environment
-from src.visualization.plots import (
+from ml.utils.helpers import setup_environment
+from ml.visualization.plots import (
     plot_categorical_features,
     plot_confusion_matrix,
     plot_correlation_heatmap,
@@ -69,11 +73,13 @@ def main():
     num_cols = show_numeric_columns(df, target_col)
     plot_outlier_boxplots(df, num_cols, rows, cols_per_row)
 
-    df = cap_outliers(df)
+    cap_bounds = get_cap_bounds(df)
+    df = apply_cap_bounds(df, cap_bounds)
     plot_correlation_heatmap(df, num_cols)
 
     df = drop_loan_to_income_ratio(df)
 
+    encoders = fit_label_encoders(df)
     df_model = encode_categorical_features(df)
     df_model = add_net_worth_feature(df_model)
 
@@ -111,6 +117,15 @@ def main():
         xgb_result,
     )
 
+    save_training_artifacts(
+        best_model=best_model,
+        scaler=scaler,
+        encoders=encoders,
+        cap_bounds=cap_bounds,
+        feature_columns=X_train.columns.tolist(),
+        best_name=best_name,
+    )
+
     return {
         "df": df,
         "df_model": df_model,
@@ -129,6 +144,8 @@ def main():
         "best_name": best_name,
         "best": best,
         "best_model": best_model,
+        "encoders": encoders,
+        "cap_bounds": cap_bounds,
         "sample_applicants": sample_applicants,
         "results_df": results_df,
         "styled": styled,

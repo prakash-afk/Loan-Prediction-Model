@@ -1,26 +1,10 @@
-kagglehub
-# Core
 numpy
 pandas
-
-# ML
-scikit-learn
-joblib
-
-# Visualization (EDA only)
 matplotlib
 seaborn
-
-# API
+scikit-learn
+xgboost
 fastapi
 uvicorn
-
-# Validation (schemas)
+joblib
 pydantic
-
-# Optional (if using env variables)
-python-dotenv
-
-# Optional (if you experiment with notebooks)
-jupyter
-ipykernel

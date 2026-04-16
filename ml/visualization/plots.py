@@ -5,8 +5,8 @@ import pandas as pd
 import seaborn as sns
 from sklearn.metrics import confusion_matrix, roc_auc_score, roc_curve
 
-from config import LABEL_MAP, PALETTE
-from src.utils.helpers import combine_all_results
+from app.core.config import LABEL_MAP, PALETTE
+from ml.utils.helpers import combine_all_results
 
 
 def plot_target_distribution(df, target_col):
