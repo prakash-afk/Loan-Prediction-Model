@@ -122,34 +122,6 @@ Raw dataset columns:
 
 The training entry point is `main.py`.
 
-### Training Flow
-
-The pipeline performs the following steps:
-
-1. Loads the dataset from `data/dataset.csv`.
-2. Drops `customer_id`.
-3. Displays dataset information and missing-value summaries.
-4. Removes rows with negative `savings_assets`.
-5. Applies `log1p` transformation to skewed numeric columns:
-   - `annual_income`
-   - `savings_assets`
-   - `current_debt`
-   - `loan_amount`
-6. Creates `has_derog` from `derogatory_marks > 0`.
-7. Drops `derogatory_marks`.
-8. Caps selected numeric columns at the 1st and 99th percentiles.
-9. Drops `loan_to_income_ratio`.
-10. Label-encodes categorical columns:
-    - `occupation_status`
-    - `product_type`
-    - `loan_intent`
-11. Creates a new `net_worth` feature:
-    - `savings_assets - current_debt`
-12. Splits data into training and test sets using stratification.
-13. Applies standard scaling for models that need it.
-14. Trains and evaluates multiple models.
-15. Selects the best model using the highest cross-validation mean score.
-16. Saves artifacts for inference.
 
 ### Models Trained
 
@@ -182,12 +154,6 @@ The training script writes reusable inference artifacts to `artifacts/`:
 - `encoders.pkl`: label encoders, capping bounds, model metadata
 - `feature_columns.json`: exact feature order expected at inference time
 
-Current local artifact metadata:
-
-- Best model name: `XGBoost`
-- Saved model class: `XGBClassifier`
-- Feature count used during inference: `18`
-- Uses scaler during inference: `False`
 
 ## FastAPI Backend
 
@@ -278,16 +244,6 @@ Example response shape:
 }
 ```
 
-### Accepted Categorical Values
-
-The API currently expects categorical values drawn from the trained encoder classes used by the frontend:
-
-- `occupation_status`: `Employed`, `Self-Employed`, `Student`
-- `product_type`: `Credit Card`, `Line of Credit`, `Personal Loan`
-- `loan_intent`: `Business`, `Debt Consolidation`, `Education`, `Home Improvement`, `Medical`, `Personal`
-
-If an unknown category is sent, the API raises a validation error instead of silently coercing the value.
-
 ## Frontend Dashboard
 
 This workspace also includes a Vite + React dashboard under `frontend/` for interactive scoring.
@@ -347,22 +303,6 @@ npm install
 cd ..
 ```
 
-## How To Run The Project
-
-### Run The Training Pipeline
-
-This generates or refreshes the model artifacts used by the API.
-
-```powershell
-.\.venv\Scripts\python.exe main.py
-```
-
-Outputs generated or updated:
-
-- model artifacts in `artifacts/`
-- evaluation plots shown during execution
-- console metrics such as test accuracy, cross-validation mean, and classification report
-
 ### Run The FastAPI Server
 
 ```powershell
@@ -372,11 +312,6 @@ Outputs generated or updated:
 Default backend URL:
 
 - `http://127.0.0.1:8000`
-
-Useful docs pages:
-
-- Swagger UI: `http://127.0.0.1:8000/docs`
-- ReDoc: `http://127.0.0.1:8000/redoc`
 
 ### Run The Frontend
 
@@ -391,87 +326,6 @@ npm run dev
 Default frontend URL:
 
 - `http://127.0.0.1:5173`
-
-## Example Local Usage
-
-### Health Check
-
-```powershell
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/health"
-```
-
-### Single Prediction
-
-```powershell
-$payload = @{
-  age = 34
-  occupation_status = "Employed"
-  years_employed = 7.5
-  annual_income = 72000
-  credit_score = 710
-  credit_history_years = 10.2
-  savings_assets = 18000
-  current_debt = 9500
-  defaults_on_file = 0
-  delinquencies_last_2yrs = 1
-  derogatory_marks = 0
-  product_type = "Personal Loan"
-  loan_intent = "Home Improvement"
-  loan_amount = 12000
-  interest_rate = 11.5
-  debt_to_income_ratio = 0.1319
-  loan_to_income_ratio = 0.1667
-  payment_to_income_ratio = 0.0192
-} | ConvertTo-Json
-
-Invoke-RestMethod `
-  -Method Post `
-  -Uri "http://127.0.0.1:8000/predict" `
-  -ContentType "application/json" `
-  -Body $payload
-```
-
-## Important Notes
-
-- The API will fail to start if the artifacts in `artifacts/` are missing. Run `main.py` first.
-- The dataset is not committed because `data/` is git-ignored.
-- The inference pipeline must match the training-time preprocessing exactly; this project handles that in `prediction_service.py`.
-- Logistic Regression is the only saved-model path that uses the scaler flag during inference.
-- The frontend computes ratio fields automatically, but direct API clients must send those fields explicitly.
-- There is no automated test suite in the repository right now, so manual verification is important after changes.
-
-## Troubleshooting
-
-### `Missing model artifacts`
-
-Cause:
-
-- The backend started before training artifacts were created.
-
-Fix:
-
-```powershell
-.\.venv\Scripts\python.exe main.py
-```
-
-### `Unknown category values`
-
-Cause:
-
-- A request used a categorical value not present in the fitted label encoder classes.
-
-Fix:
-
-- Use only the allowed categorical values listed in this README.
-- Retrain the model if the valid domain of values has changed.
-
-### Frontend Cannot Reach Backend
-
-Check:
-
-- the API server is running on port `8000`
-- `frontend/.env.local` points to the correct backend URL
-- CORS allows `http://localhost:5173` and `http://127.0.0.1:5173`
 
 ## Future Improvements
 
