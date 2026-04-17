@@ -18,6 +18,12 @@ data/
 # VS Code
 .vscode/
 
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.env.local
+
 # OS files
 .DS_Store
 Thumbs.db
