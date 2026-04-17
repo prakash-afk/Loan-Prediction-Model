@@ -1,0 +1,42 @@
+export const FIELD_GROUPS = [
+  {
+    key: "applicant-profile",
+    title: "Applicant Profile",
+    description: "Identity, employment, and credit background inputs.",
+    accentColor: "#2d6a4f",
+    borderLeft: "4px solid #2d6a4f",
+    fields: [
+      "age",
+      "occupation_status",
+      "years_employed",
+      "credit_score",
+      "credit_history_years",
+      "defaults_on_file",
+      "delinquencies_last_2yrs",
+      "derogatory_marks",
+    ],
+  },
+  {
+    key: "financial-position",
+    title: "Financial Position",
+    description: "Income, debt, and financial ratio details.",
+    accentColor: "#b5860d",
+    borderLeft: "4px solid #b5860d",
+    fields: [
+      "annual_income",
+      "savings_assets",
+      "current_debt",
+      "debt_to_income_ratio",
+      "loan_to_income_ratio",
+      "payment_to_income_ratio",
+    ],
+  },
+  {
+    key: "loan-details",
+    title: "Loan Details",
+    description: "Requested product and loan-specific terms.",
+    accentColor: "#2563eb",
+    borderLeft: "4px solid #2563eb",
+    fields: ["product_type", "loan_intent", "loan_amount", "interest_rate"],
+  },
+];
