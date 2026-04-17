@@ -8,19 +8,16 @@ import {
   buildEmptyFormValues,
   buildTouchedState,
   coerceFormValues,
+  getRevalidationFields,
   isAutoCalculatedField,
+  isValueEmpty,
+  preventInvalidNumericKeyDown,
+  sanitizeFieldInput,
   validateFieldValue,
   validateFormValues,
 } from "../utils/formUtils";
 import { BatchResultsTable } from "./BatchResultsTable";
 import { HealthBadge } from "./HealthBadge";
-
-const AUTO_DEPENDENCY_FIELDS = new Set([
-  "current_debt",
-  "annual_income",
-  "loan_amount",
-  "interest_rate",
-]);
 
 function createRow(id, seedValues = {}) {
   return {
@@ -57,24 +54,18 @@ export function BatchTable({ health }) {
   const [errorMessage, setErrorMessage] = useState("");
 
   const readyRows = rows.filter((row) => !hasRowErrors(row)).length;
+  const batchHasErrors = readyRows !== rows.length;
 
   function updateRows(updater) {
     setRows((currentRows) => updater(currentRows));
   }
 
-  function getFieldsToRevalidate(fieldName) {
-    return AUTO_DEPENDENCY_FIELDS.has(fieldName)
-      ? [
-          fieldName,
-          "debt_to_income_ratio",
-          "loan_to_income_ratio",
-          "payment_to_income_ratio",
-        ]
-      : [fieldName];
-  }
-
   function handleCellChange(rowId, fieldName, nextValue) {
-    const fieldsToRevalidate = getFieldsToRevalidate(fieldName);
+    const sanitizedValue =
+      FIELD_METADATA[fieldName].type === "select"
+        ? nextValue
+        : sanitizeFieldInput(fieldName, nextValue);
+    const fieldsToRevalidate = getRevalidationFields(fieldName);
 
     updateRows((currentRows) =>
       currentRows.map((row) => {
@@ -86,16 +77,24 @@ export function BatchTable({ health }) {
           ...row,
           values: applyAutoCalculatedValues({
             ...row.values,
-            [fieldName]: nextValue,
+            [fieldName]: sanitizedValue,
           }),
         };
+        nextRow.touched = { ...row.touched };
+
+        fieldsToRevalidate.forEach((name) => {
+          if (name === fieldName || row.touched[name] || !isValueEmpty(nextRow.values[name])) {
+            nextRow.touched[name] = true;
+          }
+        });
 
         nextRow.errors = { ...row.errors };
         fieldsToRevalidate.forEach((name) => {
-          if (row.touched[name]) {
+          if (nextRow.touched[name]) {
             nextRow.errors[name] = validateFieldValue(
               name,
               nextRow.values[name],
+              nextRow.values,
             );
           }
         });
@@ -110,7 +109,7 @@ export function BatchTable({ health }) {
   }
 
   function handleCellBlur(rowId, fieldName) {
-    const fieldsToRevalidate = getFieldsToRevalidate(fieldName);
+    const fieldsToRevalidate = getRevalidationFields(fieldName);
 
     updateRows((currentRows) =>
       currentRows.map((row) => {
@@ -122,14 +121,20 @@ export function BatchTable({ health }) {
           ...row,
           touched: fieldsToRevalidate.reduce(
             (nextTouched, name) => {
-              nextTouched[name] = true;
+              if (name === fieldName || row.touched[name] || !isValueEmpty(row.values[name])) {
+                nextTouched[name] = true;
+              }
               return nextTouched;
             },
             { ...row.touched },
           ),
           errors: fieldsToRevalidate.reduce(
             (nextErrors, name) => {
-              nextErrors[name] = validateFieldValue(name, row.values[name]);
+              nextErrors[name] = validateFieldValue(
+                name,
+                row.values[name],
+                row.values,
+              );
               return nextErrors;
             },
             { ...row.errors },
@@ -286,7 +291,7 @@ export function BatchTable({ health }) {
             type="button"
             className="button button--primary"
             onClick={handleSubmitBatch}
-            disabled={isSubmitting}
+            disabled={isSubmitting || batchHasErrors}
           >
             {isSubmitting ? (
               <span className="button__content">
@@ -375,13 +380,19 @@ export function BatchTable({ health }) {
                           className={`table-control ${
                             autoCalculated ? "table-control--readonly" : ""
                           }`}
-                          type={autoCalculated ? "text" : "number"}
-                          step={metadata.step}
-                          min={metadata.min}
+                          type="text"
+                          inputMode={metadata.inputMode}
+                          pattern={
+                            metadata.numericFormat === "integer"
+                              ? "[0-9]*"
+                              : "[0-9]*[.]?[0-9]*"
+                          }
+                          autoComplete="off"
                           placeholder={metadata.placeholder}
                           value={displayValue}
                           readOnly={autoCalculated}
                           aria-readonly={autoCalculated}
+                          aria-invalid={hasError}
                           onChange={
                             autoCalculated
                               ? undefined
@@ -390,6 +401,16 @@ export function BatchTable({ health }) {
                                     row.id,
                                     fieldName,
                                     event.target.value,
+                                  )
+                          }
+                          onKeyDown={
+                            autoCalculated
+                              ? undefined
+                              : (event) =>
+                                  preventInvalidNumericKeyDown(
+                                    event,
+                                    fieldName,
+                                    row.values[fieldName],
                                   )
                           }
                           onBlur={

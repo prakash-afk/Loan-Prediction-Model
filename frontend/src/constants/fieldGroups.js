@@ -27,7 +27,6 @@ export const FIELD_GROUPS = [
       "savings_assets",
       "current_debt",
       "debt_to_income_ratio",
-      "loan_to_income_ratio",
       "payment_to_income_ratio",
     ],
   },

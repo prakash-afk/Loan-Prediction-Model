@@ -10,21 +10,18 @@ import {
   buildTouchedState,
   coerceFormValues,
   formatRatioDisplayValue,
+  getRevalidationFields,
   getRiskLabel,
+  isValueEmpty,
   isAutoCalculatedField,
+  preventInvalidNumericKeyDown,
+  sanitizeFieldInput,
   validateFieldValue,
   validateFormValues,
 } from "../utils/formUtils";
 import { FormSection } from "./FormSection";
 import { PredictionSummary } from "./PredictionSummary";
 import { StepIndicator } from "./StepIndicator";
-
-const AUTO_DEPENDENCY_FIELDS = new Set([
-  "current_debt",
-  "annual_income",
-  "loan_amount",
-  "interest_rate",
-]);
 
 function mapSingleFieldErrors(fieldErrors) {
   return Object.entries(fieldErrors || {}).reduce(
@@ -47,7 +44,7 @@ function buildInitialValues() {
 
 function isGroupComplete(group, values) {
   return group.fields.every(
-    (fieldName) => !validateFieldValue(fieldName, values[fieldName]),
+    (fieldName) => !validateFieldValue(fieldName, values[fieldName], values),
   );
 }
 
@@ -130,12 +127,6 @@ export function SinglePredictionForm({
     }, 400);
   }
 
-  function getFieldsToRevalidate(fieldName) {
-    return AUTO_DEPENDENCY_FIELDS.has(fieldName)
-      ? [fieldName, "debt_to_income_ratio", "loan_to_income_ratio", "payment_to_income_ratio"]
-      : [fieldName];
-  }
-
   function buildNextValues(fieldName, nextValue) {
     return applyAutoCalculatedValues({
       ...values,
@@ -144,17 +135,29 @@ export function SinglePredictionForm({
   }
 
   function handleFieldChange(fieldName, nextValue) {
-    const nextValues = buildNextValues(fieldName, nextValue);
-    const fieldsToRevalidate = getFieldsToRevalidate(fieldName);
+    const sanitizedValue =
+      FIELD_METADATA[fieldName].type === "select"
+        ? nextValue
+        : sanitizeFieldInput(fieldName, nextValue);
+    const nextValues = buildNextValues(fieldName, sanitizedValue);
+    const fieldsToRevalidate = getRevalidationFields(fieldName);
+    const nextTouched = { ...touched };
+
+    fieldsToRevalidate.forEach((name) => {
+      if (name === fieldName || touched[name] || !isValueEmpty(nextValues[name])) {
+        nextTouched[name] = true;
+      }
+    });
 
     setValues(nextValues);
+    setTouched(nextTouched);
 
     setErrors((currentErrors) => {
       const nextErrors = { ...currentErrors };
 
       fieldsToRevalidate.forEach((name) => {
-        if (touched[name]) {
-          nextErrors[name] = validateFieldValue(name, nextValues[name]);
+        if (nextTouched[name]) {
+          nextErrors[name] = validateFieldValue(name, nextValues[name], nextValues);
         }
       });
 
@@ -167,12 +170,14 @@ export function SinglePredictionForm({
   }
 
   function handleFieldBlur(fieldName) {
-    const fieldsToRevalidate = getFieldsToRevalidate(fieldName);
+    const fieldsToRevalidate = getRevalidationFields(fieldName);
 
     setTouched((currentTouched) => {
       const nextTouched = { ...currentTouched };
       fieldsToRevalidate.forEach((name) => {
-        nextTouched[name] = true;
+        if (name === fieldName || currentTouched[name] || !isValueEmpty(values[name])) {
+          nextTouched[name] = true;
+        }
       });
       return nextTouched;
     });
@@ -180,7 +185,7 @@ export function SinglePredictionForm({
     setErrors((currentErrors) => {
       const nextErrors = { ...currentErrors };
       fieldsToRevalidate.forEach((name) => {
-        nextErrors[name] = validateFieldValue(name, values[name]);
+        nextErrors[name] = validateFieldValue(name, values[name], values);
       });
       return nextErrors;
     });
@@ -311,18 +316,33 @@ export function SinglePredictionForm({
             className={`field-card__control ${
               autoCalculated ? "field-card__control--readonly" : ""
             }`}
-            type={autoCalculated ? "text" : "number"}
+            type="text"
             inputMode={metadata.inputMode}
+            pattern={
+              metadata.numericFormat === "integer"
+                ? "[0-9]*"
+                : "[0-9]*[.]?[0-9]*"
+            }
+            autoComplete="off"
             placeholder={metadata.placeholder}
-            step={metadata.step}
-            min={metadata.min}
             value={displayValue}
             readOnly={autoCalculated}
             aria-readonly={autoCalculated}
+            aria-invalid={hasError}
             onChange={
               autoCalculated
                 ? undefined
                 : (event) => handleFieldChange(fieldName, event.target.value)
+            }
+            onKeyDown={
+              autoCalculated
+                ? undefined
+                : (event) =>
+                    preventInvalidNumericKeyDown(
+                      event,
+                      fieldName,
+                      values[fieldName],
+                    )
             }
             onBlur={autoCalculated ? undefined : () => handleFieldBlur(fieldName)}
           />

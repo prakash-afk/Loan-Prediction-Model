@@ -3,7 +3,7 @@ import { validateFieldValue } from "../utils/formUtils";
 
 function isGroupComplete(group, values) {
   return group.fields.every(
-    (fieldName) => !validateFieldValue(fieldName, values[fieldName]),
+    (fieldName) => !validateFieldValue(fieldName, values[fieldName], values),
   );
 }
 
