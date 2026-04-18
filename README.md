@@ -1,4 +1,4 @@
-# Loan Prediction Model
+# Loan Approval Prediction  Model
 
 An end-to-end loan approval prediction project that combines a machine learning training pipeline, a FastAPI inference service, and a React dashboard for single-record and batch scoring workflows.
 
