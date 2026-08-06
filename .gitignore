@@ -10,7 +10,7 @@ __pycache__/
 
 
 # Data
-data/
+/data/
 
 # Environment variables
 .env
