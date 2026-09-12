@@ -1,0 +1,41 @@
+# Folders that don't need to go into the Docker build context
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyc
+
+# Virtual environments
+.venv/
+
+# Data (not needed at runtime, model artifacts are separate)
+data/
+
+# Notebooks
+notebooks/
+
+# Frontend (deployed separately to Vercel)
+frontend/
+
+# Tests (not needed in production image)
+tests/
+
+# Git
+.git/
+.github/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+
+# VS Code
+.vscode/
+
+# Pytest cache
+.pytest_cache/

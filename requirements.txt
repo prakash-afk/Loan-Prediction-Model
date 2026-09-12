@@ -1,13 +1,14 @@
-numpy
-pandas
-matplotlib
-seaborn
-scikit-learn
-xgboost
-fastapi
-uvicorn
-joblib
-pydantic
-pytest
-requests
-selenium
+# Pinned for reproducible Docker builds
+numpy==2.4.2
+pandas==2.2.2
+matplotlib==3.9.2
+seaborn==0.13.2
+scikit-learn==1.5.1
+xgboost==2.1.1
+fastapi==0.115.0
+uvicorn==0.30.6
+joblib==1.4.2
+pydantic==2.8.2
+pytest==7.4.4
+requests==2.32.5
+selenium==4.25.0
