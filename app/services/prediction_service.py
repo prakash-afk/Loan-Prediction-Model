@@ -23,7 +23,7 @@ def apply_inference_preprocessing(df: pd.DataFrame, artifacts: LoadedArtifacts) 
         lower, upper = bounds
         processed_df[col] = processed_df[col].clip(lower=lower, upper=upper)
 
-    processed_df.drop("loan_to_income_ratio", axis=1, inplace=True)
+    processed_df.drop("loan_to_income_ratio", axis=1, inplace=True, errors="ignore")
 
     for col in CATEGORICAL_COLUMNS:
         values = processed_df[col].astype(str)

@@ -8,8 +8,13 @@ router = APIRouter()
 
 
 @router.get("/health")
-def health():
-    return {"status": "ok"}
+def health(request: Request):
+    artifacts = request.app.state.model_artifacts
+    return {
+        "status": "ok",
+        "model_name": artifacts.best_model_name,
+        "feature_count": len(artifacts.feature_columns),
+    }
 
 
 @router.post("/predict", response_model=PredictionResponse)
