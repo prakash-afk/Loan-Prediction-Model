@@ -40,6 +40,5 @@ API_INPUT_FIELDS = [
     "loan_amount",
     "interest_rate",
     "debt_to_income_ratio",
-    "loan_to_income_ratio",
     "payment_to_income_ratio",
 ]

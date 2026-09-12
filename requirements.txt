@@ -8,3 +8,6 @@ fastapi
 uvicorn
 joblib
 pydantic
+pytest
+requests
+selenium
