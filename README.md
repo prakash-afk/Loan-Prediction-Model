@@ -4,6 +4,16 @@ An end-to-end loan approval prediction project that combines a machine learning 
 
 The project trains multiple classification models on a structured loan dataset, selects the best performer by cross-validation, saves reusable artifacts, and serves predictions through a backend API. The current saved production artifact is an `XGBoost` classifier built from 18 engineered features.
 
+## 🚀 Live Demo
+
+| Service | URL | Platform |
+|---|---|---|
+| 🌐 **Frontend Dashboard** | [loan-prediction-model-sigma.vercel.app](https://loan-prediction-model-sigma.vercel.app) | Vercel |
+| ⚙️ **Backend API** | [loan-prediction-backend-latest.onrender.com](https://loan-prediction-backend-latest.onrender.com) | Render |
+| 📖 **API Docs (Swagger)** | [loan-prediction-backend-latest.onrender.com/docs](https://loan-prediction-backend-latest.onrender.com/docs) | Render |
+
+> **Note:** The backend runs on Render's free tier and may take up to 50 seconds to wake up after a period of inactivity.
+
 ## What This Project Does
 
 - Trains and compares multiple loan approval classifiers.
@@ -387,7 +397,8 @@ Default frontend URL:
 
 - [x] Add automated tests for preprocessing and prediction endpoints.
 - [x] Add GitHub Actions CI workflow for pull request test execution.
+- [x] Containerize the backend with Docker and deploy to Render.
+- [x] Deploy frontend to Vercel with production environment configuration.
 - [ ] Store model metrics in versioned reports.
 - [ ] Add request logging and model version metadata to API responses.
 - [ ] Support CSV import/export for batch scoring.
-- [ ] Containerize the backend and frontend for easier deployment.
