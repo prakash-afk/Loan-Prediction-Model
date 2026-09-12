@@ -4,8 +4,10 @@ on:
   push:
     branches:
       - feature/test-automation
+      - master
   pull_request:
     branches:
+      - master
       - feature/test-automation
 
 jobs:
