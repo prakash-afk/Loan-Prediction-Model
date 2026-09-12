@@ -1,4 +1,4 @@
-# Loan Approval Prediction  Model
+# Loan Approval Prediction Model
 
 An end-to-end loan approval prediction project that combines a machine learning training pipeline, a FastAPI inference service, and a React dashboard for single-record and batch scoring workflows.
 
@@ -10,7 +10,9 @@ The project trains multiple classification models on a structured loan dataset, 
 - Applies repeatable preprocessing and feature engineering for both training and inference.
 - Saves the best model, scaler, encoders, and feature metadata to disk.
 - Exposes prediction endpoints through FastAPI.
-- Supports an optional frontend dashboard for single-applicant and batch-applicant scoring.
+- Includes comprehensive automated API integration tests (pytest) and Selenium UI tests.
+- Uses GitHub Actions for automated CI/CD testing on PRs and pushes to `master` and `feature/test-automation`.
+- Supports an interactive React dashboard for single-applicant and batch-applicant scoring.
 - Supports health checks so the frontend can detect whether the backend is available.
 
 ## Workflow Overview
@@ -23,6 +25,7 @@ dataset.csv
   -> best model selection
   -> artifact export
   -> FastAPI loads artifacts on startup
+  -> GitHub Actions runs automated tests on PRs
   -> frontend submits single or batch applicant records
   -> API returns approval decision + class probabilities
 ```
@@ -39,6 +42,13 @@ dataset.csv
 - FastAPI
 - Uvicorn
 
+### Testing & CI
+
+- pytest
+- requests
+- Selenium WebDriver
+- GitHub Actions CI
+
 ### Frontend
 
 - React
@@ -51,6 +61,9 @@ Current local workspace structure:
 
 ```text
 Loan_Prediction_Model/
+|-- .github/
+|   `-- workflows/
+|       `-- tests.yml
 |-- app/
 |   |-- api/
 |   |-- core/
@@ -79,7 +92,18 @@ Loan_Prediction_Model/
 |   `-- visualization/
 |-- notebooks/
 |   `-- eda.ipynb
+|-- tests/
+|   |-- api/
+|   |   |-- conftest.py
+|   |   |-- test_health.py
+|   |   |-- test_predict.py
+|   |   `-- test_predict_batch.py
+|   `-- ui/
+|       |-- conftest.py
+|       |-- test_batch_prediction.py
+|       `-- test_single_prediction.py
 |-- main.py
+|-- pytest.ini
 |-- requirements.txt
 `-- README.md
 ```
@@ -122,7 +146,6 @@ Raw dataset columns:
 
 The training entry point is `main.py`.
 
-
 ### Models Trained
 
 Baseline models:
@@ -154,7 +177,6 @@ The training script writes reusable inference artifacts to `artifacts/`:
 - `encoders.pkl`: label encoders, capping bounds, model metadata
 - `feature_columns.json`: exact feature order expected at inference time
 
-
 ## FastAPI Backend
 
 The API application lives under `app/` and loads model artifacts during startup.
@@ -166,19 +188,21 @@ The API application lives under `app/` and loads model artifacts during startup.
 - Rejects unseen categorical values for encoded string columns.
 - Supports both single and batch predictions.
 - Returns prediction label plus approval/rejection probabilities.
-- Exposes a health endpoint for frontend availability checks.
+- Exposes a health endpoint displaying model metadata and feature count.
 
 ### API Endpoints
 
 #### `GET /health`
 
-Simple health probe used by the frontend.
+Health probe used by the frontend and CI environment checks.
 
 Example response:
 
 ```json
 {
-  "status": "ok"
+  "status": "ok",
+  "model_name": "XGBoost",
+  "feature_count": 18
 }
 ```
 
@@ -206,7 +230,6 @@ Example request body:
   "loan_amount": 12000,
   "interest_rate": 11.5,
   "debt_to_income_ratio": 0.1319,
-  "loan_to_income_ratio": 0.1667,
   "payment_to_income_ratio": 0.0192
 }
 ```
@@ -244,6 +267,40 @@ Example response shape:
 }
 ```
 
+## Testing & CI/CD Pipeline
+
+This project includes automated testing for both the backend API and frontend UI, integrated with GitHub Actions.
+
+### Running API Tests Locally
+
+Ensure the FastAPI server is running (`http://127.0.0.1:8000`), then run pytest:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests/api/ -v
+```
+
+To run smoke tests only:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests/api/ -m smoke -v
+```
+
+### Running Selenium UI Tests Locally
+
+With both the backend (`http://127.0.0.1:8000`) and React frontend (`http://127.0.0.1:5173`) running:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests/ui/ -v
+```
+
+### GitHub Actions CI
+
+The `.github/workflows/tests.yml` pipeline automatically triggers on:
+- Pushes to `master` and `feature/test-automation` branches.
+- Pull Requests targeting `master` and `feature/test-automation` branches.
+
+The workflow boots an Ubuntu runner, starts FastAPI in the background, waits for health check readiness, and executes the pytest API test suite.
+
 ## Frontend Dashboard
 
 This workspace also includes a Vite + React dashboard under `frontend/` for interactive scoring.
@@ -254,7 +311,6 @@ This workspace also includes a Vite + React dashboard under `frontend/` for inte
 - Batch prediction table with row add / duplicate / delete actions
 - Auto-calculated ratio fields:
   - `debt_to_income_ratio`
-  - `loan_to_income_ratio`
   - `payment_to_income_ratio`
 - Backend health status polling every 30 seconds
 - Animated transitions and loading states
@@ -287,7 +343,7 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-### 2. Install Backend Dependencies
+### 2. Install Backend & Testing Dependencies
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
@@ -329,8 +385,9 @@ Default frontend URL:
 
 ## Future Improvements
 
-- Add automated tests for preprocessing and prediction endpoints.
-- Store model metrics in versioned reports.
-- Add request logging and model version metadata to API responses.
-- Support CSV import/export for batch scoring.
-- Containerize the backend and frontend for easier deployment.
+- [x] Add automated tests for preprocessing and prediction endpoints.
+- [x] Add GitHub Actions CI workflow for pull request test execution.
+- [ ] Store model metrics in versioned reports.
+- [ ] Add request logging and model version metadata to API responses.
+- [ ] Support CSV import/export for batch scoring.
+- [ ] Containerize the backend and frontend for easier deployment.
